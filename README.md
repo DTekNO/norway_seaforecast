@@ -1,5 +1,3 @@
-Navigate to: [My smart home](https://github.com/jm-cook/my-smart-home/tree/main)
-
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/DTekNO/norway_seaforecast)
 [![Validate with HACS](https://github.com/DTekNO/norway_seaforecast/actions/workflows/validate.yaml/badge.svg)](https://github.com/DTekNO/norway_seaforecast/actions/workflows/validate.yaml)
 [![GitHub Release](https://img.shields.io/github/release/DTekNO/norway_seaforecast.svg)](https://github.com/DTekNO/norway_seaforecast/releases)
