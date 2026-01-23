@@ -19,8 +19,8 @@ jobs:
         id: create_zip
         with:
           files: apps/ 
-          dest: havvarsel.zip
+          dest: norway_seaforecast.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: havvarsel download
-          path: ${{ github.workspace }}/havvarsel.zip
+          name: norway_seaforecast download
+          path: ${{ github.workspace }}/norway_seaforecast.zip

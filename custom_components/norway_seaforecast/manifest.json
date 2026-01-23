@@ -1,13 +1,12 @@
 {
   "domain": "norway_seaforecast",
   "name": "Norway Seaforecast",
-  "codeowners": ["@jm-cook"],
+  "codeowners": ["@DTekNO"],
   "config_flow": true,
   "documentation": "https://github.com/DTekNO/norway_seaforecast",
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/DTekNO/norway_seaforecast/issues",
   "requirements": [],
-  "version": "1.0.0",
-  "homeassistant": "2024.1.0"
+  "version": "v2025.10.2"
 }
