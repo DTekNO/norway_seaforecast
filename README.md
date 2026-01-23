@@ -6,7 +6,7 @@
 # Norway Seaforecast Custom Integration
 Norway Seaforecast is a Home Assistant custom integration that provides oceanographic data from the Norwegian Institute for Marine Research (Havforskningsinstituttet).
 
-This custom integration creates sensors for various oceanographic variables (temperature, salinity, currents, wave height, etc.) at specified locations along the Norwegian coast. It integrates directly with Home Assistant without requiring AppDaemon or MQTT.
+This custom integration creates sensors for various oceanographic variables (temperature, salinity, currents, wave height, etc.) at specified locations along the Norwegian coast. 
 
 ## Installation
 
