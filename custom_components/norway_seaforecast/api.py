@@ -1,4 +1,4 @@
-"""API client for Havvarsel."""
+"""API client for Norway Seaforecast."""
 from __future__ import annotations
 
 from datetime import datetime, UTC as dtUTC
@@ -11,8 +11,8 @@ import async_timeout
 _LOGGER = logging.getLogger(__name__)
 
 
-class HavvarselApiClient:
-    """API client for Havvarsel."""
+class NorwaySeaforecastApiClient:
+    """API client for Norway Seaforecast."""
 
     def __init__(
         self,

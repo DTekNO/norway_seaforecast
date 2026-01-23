@@ -2,8 +2,8 @@
   "config": {
     "step": {
       "user": {
-        "title": "Set up Havvarsel",
-        "description": "Configure your Havvarsel sea temperature sensor",
+        "title": "Set up Norway Seaforecast",
+        "description": "Configure your Norway Seaforecast oceanographic sensor",
         "data": {
           "sensor_name": "Sensor Name",
           "longitude": "Longitude",
@@ -20,7 +20,7 @@
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect to Havvarsel API. Please check your coordinates and try again.",
+      "cannot_connect": "Failed to connect to Norway Seaforecast API. Please check your coordinates and try again.",
       "no_variables_selected": "Please select at least one variable to track."
     },
     "abort": {

@@ -16,7 +16,7 @@ This repository has been converted from an AppDaemon app to a full Home Assistan
 The integration now follows Home Assistant's best practices:
 
 ```
-custom_components/havvarsel/
+custom_components/norway_seaforecast/
 ├── __init__.py           # Integration entry point
 ├── manifest.json         # Integration metadata
 ├── const.py             # Constants and defaults
@@ -52,7 +52,7 @@ havvarsel_nordnes:
 
 **New Way (Custom Integration):**
 - Configure through Home Assistant UI
-- Settings → Devices & Services → Add Integration → Havvarsel
+- Settings → Devices & Services → Add Integration → Norway Seaforecast
 - Fill in the form with your location details
 
 ### 3. Sensor Updates
@@ -71,21 +71,21 @@ havvarsel_nordnes:
 ### For End Users
 
 1. **Install via HACS:**
-   - Add custom repository: `https://github.com/jm-cook/ha-havvarsel-custom-integration`
-   - Search for "Havvarsel"
+   - Add custom repository: `https://github.com/DTekNO/norway_seaforecast`
+   - Search for "Norway Seaforecast"
    - Install and restart
 
 2. **Configure:**
    - Go to Settings → Devices & Services
    - Click "+ Add Integration"
-   - Search "Havvarsel"
+   - Search "Norway Seaforecast"
    - Enter your location details
 
 ### For Developers
 
 1. **Copy to custom_components:**
    ```bash
-   cp -r custom_components/havvarsel /config/custom_components/
+   cp -r custom_components/norway_seaforecast /config/custom_components/
    ```
 
 2. **Restart Home Assistant**
@@ -93,7 +93,7 @@ havvarsel_nordnes:
 3. **Check logs:**
    ```
    Settings → System → Logs
-   Filter by "havvarsel"
+   Filter by "norway_seaforecast"
    ```
 
 ## Development Guide
@@ -105,7 +105,7 @@ havvarsel_nordnes:
    # On your HA system
    cd /config
    mkdir -p custom_components
-   # Copy the havvarsel folder here
+   # Copy the norway_seaforecast folder here
    ```
 
 2. **Enable debug logging:**
@@ -114,7 +114,7 @@ havvarsel_nordnes:
    logger:
      default: info
      logs:
-       custom_components.havvarsel: debug
+       custom_components.norway_seaforecast: debug
    ```
 
 3. **Restart and test:**
@@ -130,14 +130,14 @@ havvarsel_nordnes:
 - Forwards setup to platforms (sensor)
 
 #### `api.py`
-- `HavvarselApiClient` class
+- `NorwaySeaforecastApiClient` class
 - Methods:
   - `async_get_temperature_data()` - Fetch current and forecast data
   - `async_get_units()` - Get unit of measurement
   - `_parse_response()` - Parse API response
 
 #### `coordinator.py`
-- `HavvarselDataUpdateCoordinator` class
+- `NorwaySeaforecastDataUpdateCoordinator` class
 - Manages data updates every 10 minutes
 - Handles errors and retries
 
@@ -147,7 +147,7 @@ havvarsel_nordnes:
 - Creates unique config entries
 
 #### `sensor.py`
-- `HavvarselTemperatureSensor` class
+- `NorwaySeaforecastVariableSensor` class
 - Displays current temperature
 - Provides forecast as attributes
 
@@ -179,11 +179,11 @@ If you're currently using the AppDaemon version:
 4. **Update dashboards:**
    - Update entity IDs in your dashboards
    - Old: `sensor.havvarsel_nordnes_sea_temperature`
-   - New: `sensor.nordnes_sea_temperature` (or as configured)
+   - New: `sensor.norway_seaforecast_nordnes_sea_water_potential_temperature`
 
 ## API Reference
 
-### Havvarsel API Endpoints
+### Norway Seaforecast (Havvarsel) API Endpoints
 
 **Temperature Projection:**
 ```
@@ -248,7 +248,7 @@ Possible improvements:
 ## Support
 
 For issues and questions:
-- GitHub Issues: https://github.com/jm-cook/ha-havvarsel-custom-integration/issues
+- GitHub Issues: https://github.com/DTekNO/norway_seaforecast/issues
 - Home Assistant Community: https://community.home-assistant.io/
 
 ## License

@@ -1,4 +1,4 @@
-"""DataUpdateCoordinator for Havvarsel."""
+"""DataUpdateCoordinator for Norway Seaforecast."""
 from __future__ import annotations
 
 from datetime import timedelta
@@ -11,7 +11,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import HavvarselApiClient
+from .api import NorwaySeaforecastApiClient
 from .const import (
     CONF_DEPTH,
     CONF_LATITUDE,
@@ -24,14 +24,14 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-class HavvarselDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
-    """Class to manage fetching Havvarsel data."""
+class NorwaySeaforecastDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
+    """Class to manage fetching Norway Seaforecast data."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize the coordinator."""
         self.entry = entry
         # Create API client without variables initially
-        self.api = HavvarselApiClient(
+        self.api = NorwaySeaforecastApiClient(
             session=async_get_clientsession(hass),
             longitude=entry.data[CONF_LONGITUDE],
             latitude=entry.data[CONF_LATITUDE],
@@ -51,7 +51,7 @@ class HavvarselDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         entity_registry = async_get_entity_registry(self.hass)
         enabled_vars = []
         
-        # Look for all havvarsel entities for this config entry
+        # Look for all norway_seaforecast entities for this config entry
         for entity_id, entry in entity_registry.entities.items():
             if entry.config_entry_id == self.entry.entry_id and entry.domain == "sensor":
                 # Check if entity is enabled

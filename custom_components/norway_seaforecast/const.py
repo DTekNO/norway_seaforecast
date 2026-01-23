@@ -1,6 +1,6 @@
-"""Constants for the Havvarsel integration."""
+"""Constants for the Norway Seaforecast integration."""
 
-DOMAIN = "havvarsel"
+DOMAIN = "norway_seaforecast"
 
 # Config entry fields
 CONF_LONGITUDE = "longitude"

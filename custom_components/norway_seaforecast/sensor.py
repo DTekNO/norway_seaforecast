@@ -1,4 +1,4 @@
-"""Sensor platform for Havvarsel."""
+"""Sensor platform for Norway Seaforecast."""
 from __future__ import annotations
 
 from datetime import datetime
@@ -18,7 +18,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import CONF_SENSOR_NAME, CONF_VARIABLES, DEFAULT_SENSOR_NAME, DEFAULT_VARIABLES, DOMAIN
-from .coordinator import HavvarselDataUpdateCoordinator
+from .coordinator import NorwaySeaforecastDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,8 +28,8 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the Havvarsel sensor."""
-    coordinator: HavvarselDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    """Set up the Norway Seaforecast sensor."""
+    coordinator: NorwaySeaforecastDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     # Fetch all available variables from API with metadata
     try:
@@ -43,19 +43,19 @@ async def async_setup_entry(
         available_variables_dict = {"temperature": "Sea water potential temperature"}
         metadata_dict = {}
     
-    entities: list[HavvarselVariableSensor] = []
+    entities: list[NorwaySeaforecastVariableSensor] = []
     
     # Create sensors for ALL available variables
     # Temperature will be enabled by default, others disabled
     for varname in available_variables_dict.keys():
-        sensor = HavvarselVariableSensor(coordinator, entry, varname, metadata_dict.get(varname, []))
+        sensor = NorwaySeaforecastVariableSensor(coordinator, entry, varname, metadata_dict.get(varname, []))
         # Only temperature is enabled by default
         if varname != "temperature":
             sensor._attr_entity_registry_enabled_default = False
         entities.append(sensor)
     
     _LOGGER.info(
-        "Havvarsel: created %d sensors (%d enabled by default)",
+        "Norway Seaforecast: created %d sensors (%d enabled by default)",
         len(entities),
         sum(1 for e in entities if getattr(e, "_attr_entity_registry_enabled_default", True))
     )
@@ -63,16 +63,16 @@ async def async_setup_entry(
     async_add_entities(entities, False)
 
 
-class HavvarselVariableSensor(
-    CoordinatorEntity[HavvarselDataUpdateCoordinator], SensorEntity
+class NorwaySeaforecastVariableSensor(
+    CoordinatorEntity[NorwaySeaforecastDataUpdateCoordinator], SensorEntity
 ):
-    """Generic sensor for a single Havvarsel variable."""
+    """Generic sensor for a single Norway Seaforecast variable."""
 
     _attr_has_entity_name = True
 
     def __init__(
         self,
-        coordinator: HavvarselDataUpdateCoordinator,
+        coordinator: NorwaySeaforecastDataUpdateCoordinator,
         entry: ConfigEntry,
         variable_name: str,
         metadata: list[dict[str, str]] | None = None,
@@ -120,7 +120,7 @@ class HavvarselVariableSensor(
         # Device info
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
-            name=f"Havvarsel {sensor_name}",
+            name=f"Norway Seaforecast {sensor_name}",
             manufacturer="IMR, Norway",
             entry_type=DeviceEntryType.SERVICE,
             configuration_url="https://api.havvarsel.no",

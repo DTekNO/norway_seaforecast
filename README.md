@@ -1,12 +1,12 @@
 Navigate to: [My smart home](https://github.com/jm-cook/my-smart-home/tree/main)
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/jm-cook/ha-havvarsel-custom-integration)
-[![Validate with HACS](https://github.com/jm-cook/ha-havvarsel-custom-integration/actions/workflows/validate.yaml/badge.svg)](https://github.com/jm-cook/ha-havvarsel-custom-integration/actions/workflows/validate.yaml)
-[![GitHub Release](https://img.shields.io/github/release/jm-cook/ha-havvarsel-custom-integration.svg)](https://github.com/jm-cook/ha-havvarsel-custom-integration/releases)
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/DTekNO/norway_seaforecast)
+[![Validate with HACS](https://github.com/DTekNO/norway_seaforecast/actions/workflows/validate.yaml/badge.svg)](https://github.com/DTekNO/norway_seaforecast/actions/workflows/validate.yaml)
+[![GitHub Release](https://img.shields.io/github/release/DTekNO/norway_seaforecast.svg)](https://github.com/DTekNO/norway_seaforecast/releases)
 ![Project Maintenance](https://img.shields.io/maintenance/yes/2025.svg)
 
-# HA Havvarsel Custom Integration
-HA Havvarsel is a Home Assistant custom integration that provides oceanographic data from the Norwegian Institute for Marine Research (Havforskningsinstituttet).
+# Norway Seaforecast Custom Integration
+Norway Seaforecast is a Home Assistant custom integration that provides oceanographic data from the Norwegian Institute for Marine Research (Havforskningsinstituttet).
 
 This custom integration creates sensors for various oceanographic variables (temperature, salinity, currents, wave height, etc.) at specified locations along the Norwegian coast. It integrates directly with Home Assistant without requiring AppDaemon or MQTT.
 
@@ -18,16 +18,16 @@ This custom integration creates sensors for various oceanographic variables (tem
 2. Click on "Integrations"
 3. Click the three dots in the top right corner
 4. Select "Custom repositories"
-5. Add the URL: `https://github.com/jm-cook/ha-havvarsel-custom-integration`
+5. Add the URL: `https://github.com/DTekNO/norway_seaforecast`
 6. Select category: "Integration"
 7. Click "Add"
-8. Search for "Havvarsel" in HACS
+8. Search for "Norway Seaforecast" in HACS
 9. Click "Download"
 10. Restart Home Assistant
 
 ### Manual Installation
 
-1. Copy the `custom_components/havvarsel` folder to your Home Assistant `custom_components` directory
+1. Copy the `custom_components/norway_seaforecast` folder to your Home Assistant `custom_components` directory
 2. Restart Home Assistant
 
 ## Configuration
@@ -36,14 +36,14 @@ After installation, add the integration through the Home Assistant UI:
 
 1. Go to **Settings** → **Devices & Services**
 2. Click **+ Add Integration**
-3. Search for "Havvarsel"
+3. Search for "Norway Seaforecast"
 4. Follow the configuration steps:
    - **Sensor Name**: A descriptive name for your location (e.g., "Home" or "Nordnes")
    - **Longitude**: The longitude of your desired location (e.g., 5.302337)
    - **Latitude**: The latitude of your desired location (e.g., 60.398942)
    - **Depth**: The depth in meters (default: 0 for surface)
 
-The integration will automatically create 13 sensors for different oceanographic variables. By default, only the temperature sensor is enabled. You can enable additional sensors through **Settings** → **Devices & Services** → **Havvarsel** → (select your location) → **Entities**.
+The integration will automatically create 13 sensors for different oceanographic variables. By default, only the temperature sensor is enabled. You can enable additional sensors through **Settings** → **Devices & Services** → **Norway Seaforecast** → (select your location) → **Entities**.
 
 You can add multiple locations by repeating the process.
 
@@ -110,7 +110,7 @@ views:
             heading_style: title
           - graph: line
             type: sensor
-            entity: sensor.havvarsel_home_sea_water_potential_temperature
+            entity: sensor.norway_seaforecast_home_sea_water_potential_temperature
             detail: 1
             icon: mdi:swim
             grid_options:
@@ -136,14 +136,14 @@ views:
               - id: temp
                 decimals: 1
             series:
-              - entity: sensor.havvarsel_home_sea_water_potential_temperature
+              - entity: sensor.norway_seaforecast_home_sea_water_potential_temperature
                 yaxis_id: temp
                 name: Temperature
                 data_generator: |
                   return entity.attributes.series.map((entry) => {
                     return [new Date(entry.timestamp).getTime(), entry.value];
                   });
-              - entity: sensor.havvarsel_home_sea_water_potential_temperature
+              - entity: sensor.norway_seaforecast_home_sea_water_potential_temperature
                 yaxis_id: temp
                 name: Trend (24h avg)
                 group_by:
@@ -160,7 +160,7 @@ views:
             heading_style: title
           - type: map
             entities:
-              - entity: sensor.havvarsel_home_sea_water_potential_temperature
+              - entity: sensor.norway_seaforecast_home_sea_water_potential_temperature
             theme_mode: auto
             grid_options:
               columns: full
@@ -169,4 +169,4 @@ views:
 
 ## Removing Sensors
 
-To remove a sensor, simply delete the integration from **Settings** → **Devices & Services** → **Havvarsel** → (select the device) → **Delete**.
+To remove a sensor, simply delete the integration from **Settings** → **Devices & Services** → **Norway Seaforecast** → (select the device) → **Delete**.

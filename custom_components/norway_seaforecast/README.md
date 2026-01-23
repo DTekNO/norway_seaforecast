@@ -1,13 +1,13 @@
-# Havvarsel Custom Integration for Home Assistant
+# Norway Seaforecast Custom Integration for Home Assistant
 
-This directory contains the Havvarsel custom integration.
+This directory contains the Norway Seaforecast custom integration.
 
 ## Structure
 
 - `__init__.py` - Integration setup and entry point
 - `manifest.json` - Integration metadata
 - `const.py` - Constants and configuration
-- `api.py` - API client for Havvarsel service
+- `api.py` - API client for Norway Seaforecast service
 - `coordinator.py` - Data update coordinator
 - `config_flow.py` - UI configuration flow
 - `sensor.py` - Sensor platform implementation
@@ -18,13 +18,13 @@ This directory contains the Havvarsel custom integration.
 
 To test this integration:
 
-1. Copy the `custom_components/havvarsel` folder to your Home Assistant `custom_components` directory
+1. Copy the `custom_components/norway_seaforecast` folder to your Home Assistant `custom_components` directory
 2. Restart Home Assistant
-3. Add the integration through the UI: Settings → Devices & Services → Add Integration → Havvarsel
+3. Add the integration through the UI: Settings → Devices & Services → Add Integration → Norway Seaforecast
 
 ## API Reference
 
-The integration uses the Havvarsel API from the Norwegian Institute for Marine Research:
+The integration uses the Norway Seaforecast (Havvarsel) API from the Norwegian Institute for Marine Research:
 - Base URL: https://api.havvarsel.no/apis/duapi/havvarsel/v2/
 - Data projection: `/dataprojection/{variables}/{lon}/{lat}?depth={depth}`
 - Variables metadata: `/dataprojectionvariables`

@@ -1,4 +1,4 @@
-"""Config flow for Havvarsel integration."""
+"""Config flow for Norway Seaforecast integration."""
 from __future__ import annotations
 
 import logging
@@ -13,7 +13,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 
-from .api import HavvarselApiClient
+from .api import NorwaySeaforecastApiClient
 from .const import (
     CONF_DEPTH,
     CONF_SENSOR_NAME,
@@ -42,7 +42,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
     session = async_get_clientsession(hass)
-    api = HavvarselApiClient(
+    api = NorwaySeaforecastApiClient(
         session=session,
         longitude=data[CONF_LONGITUDE],
         latitude=data[CONF_LATITUDE],
@@ -71,7 +71,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Havvarsel."""
+    """Handle a config flow for Norway Seaforecast."""
 
     VERSION = 1
 
@@ -164,23 +164,23 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         
                         if coords_differ:
                             msg = (
-                                f"Havvarsel adjusted coordinates for '{user_input.get(CONF_SENSOR_NAME)}':\n\n"
+                                f"Norway Seaforecast adjusted coordinates for '{user_input.get(CONF_SENSOR_NAME)}':\n\n"
                                 f"Requested: {provided_lat:.4f}°, {provided_lon:.4f}°\n"
                                 f"Nearest grid point: {store_lat:.4f}°, {store_lon:.4f}°\n\n"
                                 "The integration will use the nearest available grid point with data."
                             )
                             _LOGGER.info(
-                                "Havvarsel: Using nearest grid point (%.4f, %.4f) instead of requested (%.4f, %.4f)",
+                                "Norway Seaforecast: Using nearest grid point (%.4f, %.4f) instead of requested (%.4f, %.4f)",
                                 store_lat, store_lon, provided_lat, provided_lon
                             )
                         else:
                             msg = (
-                                f"Havvarsel configured for '{user_input.get(CONF_SENSOR_NAME)}':\n\n"
+                                f"Norway Seaforecast configured for '{user_input.get(CONF_SENSOR_NAME)}':\n\n"
                                 f"Grid point: {store_lat:.4f}°, {store_lon:.4f}°\n\n"
                                 "Using nearest available grid point with data."
                             )
                             _LOGGER.info(
-                                "Havvarsel: Configured at grid point (%.4f, %.4f)",
+                                "Norway Seaforecast: Configured at grid point (%.4f, %.4f)",
                                 store_lat, store_lon
                             )
                         
@@ -190,9 +190,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                                 "persistent_notification",
                                 "create",
                                 {
-                                    "title": "Havvarsel Configuration",
+                                    "title": "Norway Seaforecast Configuration",
                                     "message": msg,
-                                    "notification_id": f"havvarsel_grid_{slug}",
+                                    "notification_id": f"norway_seaforecast_grid_{slug}",
                                 },
                             )
                         )
@@ -201,7 +201,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                 # Create entry immediately without variable selection step
                 return self.async_create_entry(
-                    title=user_input.get(CONF_SENSOR_NAME, "Havvarsel"),
+                    title=user_input.get(CONF_SENSOR_NAME, "Norway Seaforecast"),
                     data=self._data,
                 )
 

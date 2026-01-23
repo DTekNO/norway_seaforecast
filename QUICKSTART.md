@@ -8,20 +8,20 @@
 1. Open HACS in Home Assistant
 2. Go to "Integrations"
 3. Click ⋮ (three dots) → "Custom repositories"
-4. Add: `https://github.com/jm-cook/ha-havvarsel-custom-integration`
+4. Add: `https://github.com/DTekNO/norway_seaforecast`
 5. Category: "Integration"
-6. Search for "Havvarsel" and download
+6. Search for "Norway Seaforecast" and download
 7. Restart Home Assistant
 
 **Option B: Manual**
-1. Copy `custom_components/havvarsel` to your `config/custom_components/` folder
+1. Copy `custom_components/norway_seaforecast` to your `config/custom_components/` folder
 2. Restart Home Assistant
 
 ### Step 2: Add Your First Location
 
 1. Go to: **Settings** → **Devices & Services**
 2. Click **+ Add Integration**
-3. Search for "Havvarsel"
+3. Search for "Norway Seaforecast"
 4. Fill in the form:
    - **Sensor Name**: e.g., "Home" (this names your location)
    - **Longitude**: e.g., `5.302337`
@@ -34,7 +34,7 @@ The integration will create 13 sensors for different oceanographic variables. On
 ### Step 3: View Your Sensors
 
 Your sensors will appear as:
-- Entity: `sensor.havvarsel_home_sea_water_potential_temperature`
+- Entity: `sensor.norway_seaforecast_home_sea_water_potential_temperature`
 - State: Current value (e.g., temperature in °C)
 - Attributes: 
   - `series`: Time series data with `timestamp` and `value` pairs
@@ -44,7 +44,7 @@ Your sensors will appear as:
 
 ### Step 4: Enable Additional Sensors (Optional)
 
-1. Go to: **Settings** → **Devices & Services** → **Havvarsel**
+1. Go to: **Settings** → **Devices & Services** → **Norway Seaforecast**
 2. Click on your location device
 3. Enable the sensors you want (salinity, currents, wave height, etc.)
 
@@ -55,11 +55,11 @@ Your sensors will appear as:
 ```bash
 # 1. Make changes to the code
 # 2. Copy to Home Assistant
-cp -r custom_components/havvarsel /path/to/homeassistant/config/custom_components/
+cp -r custom_components/norway_seaforecast /path/to/homeassistant/config/custom_components/
 
 # 3. Restart Home Assistant
 # 4. Check logs
-tail -f /path/to/homeassistant/home-assistant.log | grep havvarsel
+tail -f /path/to/homeassistant/home-assistant.log | grep norway_seaforecast
 ```
 
 ### Enable Debug Logging
@@ -69,12 +69,12 @@ Add to `configuration.yaml`:
 logger:
   default: info
   logs:
-    custom_components.havvarsel: debug
+    custom_components.norway_seaforecast: debug
 ```
 
 ### Project Structure
 ```
-custom_components/havvarsel/
+custom_components/norway_seaforecast/
 ├── __init__.py          # Entry point
 ├── api.py              # API client
 ├── config_flow.py      # UI configuration
@@ -92,7 +92,7 @@ custom_components/havvarsel/
 ### Basic Temperature Display
 ```yaml
 type: sensor
-entity: sensor.havvarsel_home_sea_water_potential_temperature
+entity: sensor.norway_seaforecast_home_sea_water_potential_temperature
 graph: line
 detail: 1
 ```
@@ -116,14 +116,14 @@ yaxis:
   - id: temp
     decimals: 1
 series:
-  - entity: sensor.havvarsel_home_sea_water_potential_temperature
+  - entity: sensor.norway_seaforecast_home_sea_water_potential_temperature
     yaxis_id: temp
     name: Temperature
     data_generator: |
       return entity.attributes.series.map((entry) => {
         return [new Date(entry.timestamp).getTime(), entry.value];
       });
-  - entity: sensor.havvarsel_home_sea_water_potential_temperature
+  - entity: sensor.norway_seaforecast_home_sea_water_potential_temperature
     yaxis_id: temp
     name: Trend (24h avg)
     group_by:
@@ -139,15 +139,15 @@ series:
 ```yaml
 type: map
 entities:
-  - entity: sensor.havvarsel_home_sea_water_potential_temperature
+  - entity: sensor.norway_seaforecast_home_sea_water_potential_temperature
 default_zoom: 12
 ```
 
 ## Common Issues
 
 ### "Integration not found"
-- Ensure folder is named exactly `havvarsel`
-- Check it's in `custom_components/havvarsel/`
+- Ensure folder is named exactly `norway_seaforecast`
+- Check it's in `custom_components/norway_seaforecast/`
 - Restart Home Assistant
 
 ### "Cannot connect"
@@ -162,7 +162,7 @@ default_zoom: 12
 - Ensure at least one sensor is enabled for the location
 
 ### Want more variables?
-- Go to **Settings** → **Devices & Services** → **Havvarsel**
+- Go to **Settings** → **Devices & Services** → **Norway Seaforecast**
 - Click on your location device
 - Enable additional sensors (salinity, currents, waves, etc.)
 
@@ -178,4 +178,4 @@ default_zoom: 12
 
 - 📖 Full Documentation: [README.md](README.md)
 - 🔄 Migration Guide: [MIGRATION.md](MIGRATION.md)
-- 🐛 Report Issues: [GitHub Issues](https://github.com/jm-cook/ha-havvarsel-custom-integration/issues)
+- 🐛 Report Issues: [GitHub Issues](https://github.com/DTekNO/norway_seaforecast/issues)
