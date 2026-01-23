@@ -3,7 +3,7 @@ Navigate to: [My smart home](https://github.com/jm-cook/my-smart-home/tree/main)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/DTekNO/norway_seaforecast)
 [![Validate with HACS](https://github.com/DTekNO/norway_seaforecast/actions/workflows/validate.yaml/badge.svg)](https://github.com/DTekNO/norway_seaforecast/actions/workflows/validate.yaml)
 [![GitHub Release](https://img.shields.io/github/release/DTekNO/norway_seaforecast.svg)](https://github.com/DTekNO/norway_seaforecast/releases)
-![Project Maintenance](https://img.shields.io/maintenance/yes/2025.svg)
+![Project Maintenance](https://img.shields.io/maintenance/yes/2026.svg)
 
 # Norway Seaforecast Custom Integration
 Norway Seaforecast is a Home Assistant custom integration that provides oceanographic data from the Norwegian Institute for Marine Research (Havforskningsinstituttet).
@@ -43,7 +43,7 @@ After installation, add the integration through the Home Assistant UI:
    - **Latitude**: The latitude of your desired location (e.g., 60.398942)
    - **Depth**: The depth in meters (default: 0 for surface)
 
-The integration will automatically create 13 sensors for different oceanographic variables. By default, only the temperature sensor is enabled. You can enable additional sensors through **Settings** → **Devices & Services** → **Norway Seaforecast** → (select your location) → **Entities**.
+The integration will automatically create 13 sensors for different oceanographic variables. By default, only the temperature sensor is enabled. You can enable additional sensors through **Settings** → **Devices & Services** → **Norway Seaforecast** → (select the device) → **Entities** → (enable the sensors you want).
 
 You can add multiple locations by repeating the process.
 
