@@ -2,5 +2,8 @@
   "name": "Norway Seaforecast",
   "country": "NO",
   "render_readme": true,
-  "content_in_root": false
+  "content_in_root": false,
+  "zip_release": true,
+  "filename": "norway_seaforecast.zip",
+  "hide_default_branch": true
 }
