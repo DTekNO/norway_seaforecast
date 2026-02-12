@@ -1,7 +1,8 @@
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/DTekNO/norway_seaforecast)
-[![Validate with HACS](https://github.com/DTekNO/norway_seaforecast/actions/workflows/validate.yaml/badge.svg)](https://github.com/DTekNO/norway_seaforecast/actions/workflows/validate.yaml)
-[![GitHub Release](https://img.shields.io/github/release/DTekNO/norway_seaforecast.svg)](https://github.com/DTekNO/norway_seaforecast/releases)
-![Project Maintenance](https://img.shields.io/maintenance/yes/2026.svg)
+[![hacs][hacs-badge]][hacs-url]
+[![Validate with HACS][hacs-validation-badge]][hacs-validation-url]
+[![release][release-badge]][release-url]
+![Maintenance][maintenance-badge]
+![downloads][downloads-badge]
 
 # Norway Seaforecast Custom Integration
 Norway Seaforecast is a Home Assistant custom integration that provides oceanographic data from the Norwegian Institute for Marine Research (Havforskningsinstituttet).
@@ -168,3 +169,13 @@ views:
 ## Removing Sensors
 
 To remove a sensor, simply delete the integration from **Settings** → **Devices & Services** → **Norway Seaforecast** → (select the device) → **Delete**.
+
+<!-- Badge definitions -->
+[hacs-badge]: https://img.shields.io/badge/HACS-Custom-orange.svg
+[hacs-url]: https://github.com/DTekNO/norway_seaforecast
+[hacs-validation-badge]: https://github.com/DTekNO/norway_seaforecast/actions/workflows/validate.yaml/badge.svg
+[hacs-validation-url]: https://github.com/DTekNO/norway_seaforecast/actions/workflows/validate.yaml
+[maintenance-badge]: https://img.shields.io/maintenance/yes/2026.svg
+[release-badge]: https://img.shields.io/github/release/DTekNO/norway_seaforecast.svg
+[release-url]: https://github.com/DTekNO/norway_seaforecast/releases
+[downloads-badge]: https://img.shields.io/github/downloads/DTekNO/norway_seaforecast/total

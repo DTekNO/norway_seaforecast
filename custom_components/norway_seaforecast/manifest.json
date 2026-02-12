@@ -1,7 +1,7 @@
 {
   "domain": "norway_seaforecast",
   "name": "Norway Seaforecast",
-  "codeowners": ["@DTekNO"],
+  "codeowners": ["@DTekNOdev"],
   "config_flow": true,
   "documentation": "https://github.com/DTekNO/norway_seaforecast",
   "integration_type": "service",

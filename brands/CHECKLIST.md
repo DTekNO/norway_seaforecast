@@ -36,7 +36,7 @@ Before submitting to the Home Assistant Brands repository, verify:
    - [ ] Integration name: Havvarsel
    - [ ] Integration purpose: Norwegian sea/ocean condition warnings
    - [ ] Domain: `havvarsel`
-   - [ ] Repository: https://github.com/jm-cook/ha-havvarsel-custom-integration
+   - [ ] Repository: https://github.com/DTekNO/ha-havvarsel-custom-integration
 
 ### PR Description Template
 
@@ -48,7 +48,7 @@ This PR adds brand assets for the Havvarsel custom integration.
 **Integration Details:**
 - **Name**: Havvarsel
 - **Domain**: `havvarsel`
-- **Repository**: https://github.com/jm-cook/ha-havvarsel-custom-integration
+- **Repository**: https://github.com/DTekNO/ha-havvarsel-custom-integration
 - **Purpose**: Provides Norwegian sea and ocean condition warnings from the Norwegian Meteorological Institute
 
 **Files Included:**
