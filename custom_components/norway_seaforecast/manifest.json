@@ -1,12 +1,14 @@
 {
   "domain": "norway_seaforecast",
   "name": "Norway Seaforecast",
-  "codeowners": ["@DTekNOdev"],
+  "codeowners": [
+    "@DTekNOdev"
+  ],
   "config_flow": true,
   "documentation": "https://github.com/DTekNO/norway_seaforecast",
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/DTekNO/norway_seaforecast/issues",
   "requirements": [],
-  "version": "v2025.10.2"
+  "version": "2026.02.1"
 }
