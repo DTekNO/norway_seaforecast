@@ -1,6 +1,7 @@
 {
   "name": "Norway Seaforecast",
   "country": "NO",
+  "homeassistant": "2026.3.0",
   "render_readme": true,
   "content_in_root": false,
   "zip_release": true,
