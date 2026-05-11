@@ -177,5 +177,4 @@ default_zoom: 12
 ## Need Help?
 
 - 📖 Full Documentation: [README.md](README.md)
-- 🔄 Migration Guide: [MIGRATION.md](MIGRATION.md)
-- 🐛 Report Issues: [GitHub Issues](https://github.com/DTekNO/norway_seaforecast/issues)
+-  Report Issues: [GitHub Issues](https://github.com/DTekNO/norway_seaforecast/issues)
