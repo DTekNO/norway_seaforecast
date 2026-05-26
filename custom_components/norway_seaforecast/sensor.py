@@ -30,8 +30,15 @@ def _migrate_entity_unique_ids(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
     Runs on every setup but only acts when an old-style unique_id is found.
     Entity history, entity_id slugs, and dashboard assignments are preserved.
+
+    If the target unique_id is already claimed (e.g. a stale met.no duplicate
+    from a previous version), the old raw-name entity is removed so the existing
+    CF-named entity takes over cleanly.
     """
     entity_registry = async_get_entity_registry(hass)
+    uid_to_entity_id: dict[str, str] = {
+        e.unique_id: e.entity_id for e in entity_registry.entities.values()
+    }
     for entity_entry in list(entity_registry.entities.values()):
         if entity_entry.config_entry_id != entry.entry_id:
             continue
@@ -43,15 +50,24 @@ def _migrate_entity_unique_ids(hass: HomeAssistant, entry: ConfigEntry) -> None:
                 and not entity_entry.unique_id.endswith(new_suffix)
             ):
                 new_unique_id = entity_entry.unique_id[: -len(old_suffix)] + new_suffix
-                entity_registry.async_update_entity(
-                    entity_entry.entity_id, new_unique_id=new_unique_id
-                )
-                _LOGGER.info(
-                    "Migrated %s unique_id: ...%s \u2192 ...%s",
-                    entity_entry.entity_id,
-                    old_suffix,
-                    new_suffix,
-                )
+                if new_unique_id in uid_to_entity_id:
+                    # Target already exists (stale met.no duplicate) — remove the old raw-name entity
+                    _LOGGER.info(
+                        "Removing stale entity %s (superseded by %s)",
+                        entity_entry.entity_id,
+                        uid_to_entity_id[new_unique_id],
+                    )
+                    entity_registry.async_remove(entity_entry.entity_id)
+                else:
+                    entity_registry.async_update_entity(
+                        entity_entry.entity_id, new_unique_id=new_unique_id
+                    )
+                    _LOGGER.info(
+                        "Migrated %s unique_id: ...%s \u2192 ...%s",
+                        entity_entry.entity_id,
+                        old_suffix,
+                        new_suffix,
+                    )
                 break  # Only one raw_name can match per entity
 
 

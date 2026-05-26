@@ -38,8 +38,8 @@ INTEGRATION_USER_AGENT = (
     f"HomeAssistant-NorwaySeaforecast/{_MANIFEST.get('version', 'unknown')}"
     f" {_MANIFEST.get('documentation', 'https://github.com/DTekNO/norway_seaforecast')}"
 )
-# Met.no Ocean Forecast API
-MET_OCEAN_API_URL = "https://api.met.no/weatherapi/oceanforecast/2.0/complete"
+# Met.no Ocean Forecast API — use the HA-dedicated subdomain (public api.met.no blocks non-browser agents)
+MET_OCEAN_API_URL = "https://aa015h6buqvih86i1.api.met.no/weatherapi/oceanforecast/2.0/complete"
 
 # Static metadata for met.no variables (met.no has no /variables endpoint like havvarsel)
 MET_OCEAN_VARIABLES_METADATA: dict[str, list[dict[str, str]]] = {
