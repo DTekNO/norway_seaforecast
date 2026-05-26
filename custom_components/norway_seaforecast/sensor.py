@@ -15,6 +15,7 @@ from homeassistant.const import UnitOfTemperature, UnitOfLength, UnitOfSpeed
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -31,13 +32,15 @@ def _migrate_entity_unique_ids(hass: HomeAssistant, entry: ConfigEntry) -> None:
     Runs on every setup but only acts when an old-style unique_id is found.
     Entity history, entity_id slugs, and dashboard assignments are preserved.
 
-    If the target unique_id is already claimed (e.g. a stale met.no duplicate
-    from a previous version), the old raw-name entity is removed so the existing
-    CF-named entity takes over cleanly.
+    Conflict handling: if the target unique_id is already claimed by another entity
+    from the same config entry (e.g. a stale met.no-only sensor from a previous
+    version), that stale entity is removed first, then the source entity is renamed.
+    This ensures the merged sensor can register cleanly without leaving orphans.
     """
     entity_registry = async_get_entity_registry(hass)
-    uid_to_entity_id: dict[str, str] = {
-        e.unique_id: e.entity_id for e in entity_registry.entities.values()
+    # Snapshot of the registry at start: unique_id → full RegistryEntry
+    uid_to_entry: dict[str, er.RegistryEntry] = {
+        e.unique_id: e for e in entity_registry.entities.values()
     }
     for entity_entry in list(entity_registry.entities.values()):
         if entity_entry.config_entry_id != entry.entry_id:
@@ -50,14 +53,37 @@ def _migrate_entity_unique_ids(hass: HomeAssistant, entry: ConfigEntry) -> None:
                 and not entity_entry.unique_id.endswith(new_suffix)
             ):
                 new_unique_id = entity_entry.unique_id[: -len(old_suffix)] + new_suffix
-                if new_unique_id in uid_to_entity_id:
-                    # Target already exists (stale met.no duplicate) — remove the old raw-name entity
-                    _LOGGER.info(
-                        "Removing stale entity %s (superseded by %s)",
-                        entity_entry.entity_id,
-                        uid_to_entity_id[new_unique_id],
-                    )
-                    entity_registry.async_remove(entity_entry.entity_id)
+                if new_unique_id in uid_to_entry:
+                    occupant = uid_to_entry[new_unique_id]
+                    if occupant.config_entry_id == entry.entry_id:
+                        # Same config entry: occupant is a stale sensor from an old design
+                        # (e.g. the met.no-only sea_water_temperature entity).
+                        # Remove it so the source entity can take the unique_id cleanly.
+                        _LOGGER.info(
+                            "Removing stale entity %s to free unique_id for %s",
+                            occupant.entity_id,
+                            entity_entry.entity_id,
+                        )
+                        entity_registry.async_remove(occupant.entity_id)
+                        entity_registry.async_update_entity(
+                            entity_entry.entity_id, new_unique_id=new_unique_id
+                        )
+                        _LOGGER.info(
+                            "Migrated %s unique_id: ...%s \u2192 ...%s",
+                            entity_entry.entity_id,
+                            old_suffix,
+                            new_suffix,
+                        )
+                    else:
+                        # Claimed by a different config entry — don't touch the occupant;
+                        # remove the now-redundant source entity instead.
+                        _LOGGER.warning(
+                            "Cannot migrate %s: unique_id %s already claimed by %s (different entry)",
+                            entity_entry.entity_id,
+                            new_unique_id,
+                            occupant.entity_id,
+                        )
+                        entity_registry.async_remove(entity_entry.entity_id)
                 else:
                     entity_registry.async_update_entity(
                         entity_entry.entity_id, new_unique_id=new_unique_id
@@ -135,6 +161,7 @@ class NorwaySeaforecastVariableSensor(
     """Generic sensor for a single Norway Seaforecast variable."""
 
     _attr_has_entity_name = True
+    _unrecorded_attributes = frozenset({"series"})
 
     def __init__(
         self,
