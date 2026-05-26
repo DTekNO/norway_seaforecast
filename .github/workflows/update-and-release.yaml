@@ -8,6 +8,7 @@ on:
       tag_name:
         description: 'Release tag (e.g. v2026.5.1)'
         required: true
+        type: string
 
 permissions:
   contents: write
