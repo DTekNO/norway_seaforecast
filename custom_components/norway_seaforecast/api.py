@@ -31,10 +31,12 @@ HAVVARSEL_TO_CF_NAME: dict[str, str] = {
 
 # Reverse: CF name → havvarsel raw name, for building API fetch requests.
 CF_TO_HAVVARSEL_NAME: dict[str, str] = {v: k for k, v in HAVVARSEL_TO_CF_NAME.items()}
-# User-Agent sent to both APIs — version is read from manifest.json at import time.
+# User-Agent sent to both APIs — version and contact URL are read from manifest.json at import time.
+# Met.no requires contact info in the User-Agent (https://api.met.no/doc/TermsOfService).
+_MANIFEST = json.loads((Path(__file__).parent / "manifest.json").read_text())
 INTEGRATION_USER_AGENT = (
-    "HomeAssistant-NorwaySeaforecast/"
-    + json.loads((Path(__file__).parent / "manifest.json").read_text()).get("version", "unknown")
+    f"HomeAssistant-NorwaySeaforecast/{_MANIFEST.get('version', 'unknown')}"
+    f" {_MANIFEST.get('documentation', 'https://github.com/DTekNO/norway_seaforecast')}"
 )
 # Met.no Ocean Forecast API
 MET_OCEAN_API_URL = "https://api.met.no/weatherapi/oceanforecast/2.0/complete"
