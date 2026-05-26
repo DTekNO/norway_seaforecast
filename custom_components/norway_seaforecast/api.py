@@ -10,6 +10,49 @@ import async_timeout
 
 _LOGGER = logging.getLogger(__name__)
 
+# Met.no Ocean Forecast API
+MET_OCEAN_API_URL = "https://api.met.no/weatherapi/oceanforecast/2.0/complete"
+
+# Static metadata for met.no variables (met.no has no /variables endpoint like havvarsel)
+MET_OCEAN_VARIABLES_METADATA: dict[str, list[dict[str, str]]] = {
+    "sea_surface_wave_height": [
+        {"key": "units", "value": "m"},
+        {"key": "long_name", "value": "Sea surface wave height"},
+        {"key": "standard_name", "value": "sea_surface_wave_significant_height"},
+        {"key": "source", "value": "met.no"},
+    ],
+    "sea_surface_wave_from_direction": [
+        {"key": "units", "value": "degrees"},
+        {"key": "long_name", "value": "Sea surface wave from direction"},
+        {"key": "standard_name", "value": "sea_surface_wave_from_direction"},
+        {"key": "source", "value": "met.no"},
+    ],
+    "sea_water_temperature": [
+        {"key": "units", "value": "Celsius"},
+        {"key": "long_name", "value": "Sea water temperature (met.no)"},
+        {"key": "standard_name", "value": "sea_water_temperature"},
+        {"key": "source", "value": "met.no"},
+    ],
+    "sea_water_speed": [
+        {"key": "units", "value": "meter second-1"},
+        {"key": "long_name", "value": "Sea water speed (met.no)"},
+        {"key": "standard_name", "value": "sea_water_speed"},
+        {"key": "source", "value": "met.no"},
+    ],
+    "sea_water_to_direction": [
+        {"key": "units", "value": "degrees"},
+        {"key": "long_name", "value": "Sea water to direction (met.no)"},
+        {"key": "standard_name", "value": "sea_water_to_direction"},
+        {"key": "source", "value": "met.no"},
+    ],
+}
+
+# Variables available from met.no but NOT from havvarsel — enabled by default at depth=0
+MET_OCEAN_EXCLUSIVE_VARIABLES: frozenset[str] = frozenset({
+    "sea_surface_wave_height",
+    "sea_surface_wave_from_direction",
+})
+
 
 class NorwaySeaforecastApiClient:
     """API client for Norway Seaforecast."""
@@ -416,3 +459,113 @@ class NorwaySeaforecastApiClient:
             "nearest_grid_lat": nearest_grid.get("lat"),
             "forecast": forecast,
         }
+
+
+class MetOceanApiClient:
+    """API client for met.no Ocean Forecast (surface data only, no depth support)."""
+
+    def __init__(
+        self,
+        session: aiohttp.ClientSession,
+        longitude: float,
+        latitude: float,
+    ) -> None:
+        """Initialize the met.no API client."""
+        self._session = session
+        self._longitude = longitude
+        self._latitude = latitude
+
+    def get_available_variables(self) -> dict[str, str]:
+        """Return available variables with descriptions (static, no API call needed)."""
+        return {
+            var: next(
+                (m["value"] for m in metadata if m["key"] == "long_name"),
+                var.replace("_", " ").title(),
+            )
+            for var, metadata in MET_OCEAN_VARIABLES_METADATA.items()
+        }
+
+    async def async_get_data(self) -> dict[str, Any]:
+        """Fetch ocean forecast data from met.no and return in standard internal format."""
+        headers = {"User-Agent": "Home Assistant NorwaySeaforecast/1.0"}
+        params = {"lat": self._latitude, "lon": self._longitude}
+
+        try:
+            async with async_timeout.timeout(10):
+                async with self._session.get(
+                    MET_OCEAN_API_URL, headers=headers, params=params
+                ) as response:
+                    response.raise_for_status()
+                    data = await response.json()
+        except Exception as err:
+            _LOGGER.error("Error fetching met.no ocean forecast: %s", err)
+            raise
+
+        return self._parse_response(data)
+
+    def _parse_response(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Parse met.no oceanforecast response into standard internal format."""
+        timeseries = data.get("properties", {}).get("timeseries", [])
+        variables: dict[str, Any] = {}
+        now = datetime.now(dtUTC).timestamp()
+
+        for step in timeseries:
+            timestamp_str = step.get("time", "")
+            details = step.get("data", {}).get("instant", {}).get("details", {})
+
+            for var_name, value in details.items():
+                if var_name not in variables:
+                    metadata = list(MET_OCEAN_VARIABLES_METADATA.get(var_name, []))
+                    if not metadata:
+                        # Unknown variable from met.no — build minimal metadata
+                        metadata = [
+                            {"key": "long_name", "value": var_name.replace("_", " ").title()},
+                            {"key": "source", "value": "met.no"},
+                        ]
+                    variables[var_name] = {
+                        "metadata": metadata,
+                        "series": [],
+                        "_raw": [],
+                    }
+
+                try:
+                    value_float = float(value) if value is not None else None
+                except (ValueError, TypeError):
+                    value_float = None
+
+                variables[var_name]["series"].append({
+                    "timestamp": timestamp_str,
+                    "value": value_float,
+                })
+
+                try:
+                    dt_ts = datetime.fromisoformat(
+                        timestamp_str.replace("Z", "+00:00")
+                    ).timestamp()
+                except ValueError:
+                    dt_ts = 0.0
+                variables[var_name]["_raw"].append({"ts": dt_ts, "value": value_float})
+
+        # Find current value (nearest to now) for each variable
+        for var_info in variables.values():
+            raw = var_info.pop("_raw", [])
+            if raw:
+                nearest = min(raw, key=lambda x: abs(x["ts"] - now))
+                var_info["current"] = nearest["value"]
+            else:
+                var_info["current"] = None
+
+        geometry = data.get("geometry", {})
+        coords = geometry.get("coordinates", [self._longitude, self._latitude])
+        lon = coords[0] if len(coords) > 0 else self._longitude
+        lat = coords[1] if len(coords) > 1 else self._latitude
+
+        return {
+            "variables": variables,
+            "nearest_grid": {"lon": lon, "lat": lat},
+            "nearest_grid_lon": lon,
+            "nearest_grid_lat": lat,
+            "longitude": self._longitude,
+            "latitude": self._latitude,
+        }
+

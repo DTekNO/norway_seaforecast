@@ -17,6 +17,7 @@ from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from .api import MET_OCEAN_EXCLUSIVE_VARIABLES, MET_OCEAN_VARIABLES_METADATA
 from .const import CONF_SENSOR_NAME, CONF_VARIABLES, DEFAULT_SENSOR_NAME, DEFAULT_VARIABLES, DOMAIN
 from .coordinator import NorwaySeaforecastDataUpdateCoordinator
 
@@ -44,16 +45,29 @@ async def async_setup_entry(
         metadata_dict = {}
     
     entities: list[NorwaySeaforecastVariableSensor] = []
-    
-    # Create sensors for ALL available variables
-    # Temperature will be enabled by default, others disabled
-    for varname in available_variables_dict.keys():
+    havvarsel_varnames: set[str] = set(available_variables_dict.keys())
+
+    # Sensors from havvarsel — temperature enabled by default, others disabled
+    for varname in havvarsel_varnames:
         sensor = NorwaySeaforecastVariableSensor(coordinator, entry, varname, metadata_dict.get(varname, []))
-        # Only temperature is enabled by default
         if varname != "temperature":
             sensor._attr_entity_registry_enabled_default = False
         entities.append(sensor)
-    
+
+    # Sensors from met.no (depth=0 only) — skip any variable already covered by havvarsel
+    if coordinator.met_api is not None:
+        met_variables_dict = coordinator.met_api.get_available_variables()
+        for varname in met_variables_dict:
+            if varname in havvarsel_varnames:
+                continue  # Havvarsel already covers this variable
+            sensor = NorwaySeaforecastVariableSensor(
+                coordinator, entry, varname, MET_OCEAN_VARIABLES_METADATA.get(varname, [])
+            )
+            # Wave variables are exclusive to met.no and high-value — enable by default
+            if varname not in MET_OCEAN_EXCLUSIVE_VARIABLES:
+                sensor._attr_entity_registry_enabled_default = False
+            entities.append(sensor)
+
     _LOGGER.info(
         "Norway Seaforecast: created %d sensors (%d enabled by default)",
         len(entities),
@@ -148,8 +162,8 @@ class NorwaySeaforecastVariableSensor(
         for meta in metadata:
             if meta.get("key") == "units":
                 units = meta.get("value", "").strip().lower()
-                # Only set TEMPERATURE device class if we have temperature units
-                if self.variable_name == "temperature" and units in ("celsius", "°c", "c"):
+                # Set TEMPERATURE device class for temperature variables from either source
+                if self.variable_name in ("temperature", "sea_water_temperature") and units in ("celsius", "°c", "c"):
                     return SensorDeviceClass.TEMPERATURE
                 break
         

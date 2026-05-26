@@ -5,9 +5,15 @@
 ![downloads][downloads-badge]
 
 # Norway Seaforecast Custom Integration
-Norway Seaforecast is a Home Assistant custom integration that provides oceanographic data from the Norwegian Institute for Marine Research (Havforskningsinstituttet).
 
-This custom integration creates sensors for various oceanographic variables (temperature, salinity, currents, wave height, etc.) at specified locations along the Norwegian coast. 
+Norway Seaforecast is a Home Assistant custom integration providing oceanographic data for locations along the Norwegian coast.
+
+Data is sourced from two complementary APIs:
+
+- **[havvarsel.no](https://api.havvarsel.no)** (Norwegian Institute of Marine Research) — ocean currents, temperature and salinity at **configurable depth** (0–bottom)
+- **[api.met.no](https://api.met.no/weatherapi/oceanforecast/2.0/)** (Norwegian Meteorological Institute) — **wave height and wave direction** (surface only)
+
+Both APIs are queried concurrently. If one is temporarily unavailable, sensors from the other continue to update. Wave data is only available at depth = 0.
 
 ## Installation
 
@@ -36,64 +42,72 @@ After installation, add the integration through the Home Assistant UI:
 1. Go to **Settings** → **Devices & Services**
 2. Click **+ Add Integration**
 3. Search for "Norway Seaforecast"
-4. Follow the configuration steps:
-   - **Sensor Name**: A descriptive name for your location (e.g., "Home" or "Nordnes")
-   - **Longitude**: The longitude of your desired location (e.g., 5.302337)
-   - **Latitude**: The latitude of your desired location (e.g., 60.398942)
-   - **Depth**: The depth in meters (default: 0 for surface)
-
-The integration will automatically create 13 sensors for different oceanographic variables. By default, only the temperature sensor is enabled. You can enable additional sensors through **Settings** → **Devices & Services** → **Norway Seaforecast** → (select the device) → **Entities** → (enable the sensors you want).
+4. Fill in the configuration:
+   - **Sensor Name**: A descriptive name for your location (e.g., `Home` or `Nordnes`)
+   - **Longitude**: Decimal longitude (e.g., `5.302337`)
+   - **Latitude**: Decimal latitude (e.g., `60.398942`)
+   - **Depth**: Depth in metres (default: `0` for surface). Use `0` to also get wave data from met.no.
 
 You can add multiple locations by repeating the process.
 
+## Available Sensors
+
+Entity IDs below use the example sensor name **Home** (slug: `home`). Replace `home` with the slug of your chosen sensor name.
+
+### Surface sensors — depth = 0 (havvarsel.no + met.no)
+
+These sensors are created when **Depth = 0**. The two wave sensors are **enabled by default**; all others are disabled by default and can be enabled individually.
+
+| Entity ID | Variable | Unit | Source | Default |
+|---|---|---|---|---|
+| `sensor.norway_seaforecast_home_sea_water_potential_temperature` | Sea water potential temperature | °C | havvarsel.no | ✅ enabled |
+| `sensor.norway_seaforecast_home_sea_surface_wave_height` | Sea surface wave height | m | met.no | ✅ enabled |
+| `sensor.norway_seaforecast_home_sea_surface_wave_from_direction` | Sea surface wave from direction | ° | met.no | ✅ enabled |
+| `sensor.norway_seaforecast_home_sea_surface_height_above_geoid` | Sea surface height above geoid (tidal/surge) | m | havvarsel.no | disabled |
+| `sensor.norway_seaforecast_home_sea_water_salinity` | Sea water salinity | PSU | havvarsel.no | disabled |
+| `sensor.norway_seaforecast_home_sea_water_eastward_velocity` | Sea water eastward velocity | m/s | havvarsel.no | disabled |
+| `sensor.norway_seaforecast_home_sea_water_northward_velocity` | Sea water northward velocity | m/s | havvarsel.no | disabled |
+| `sensor.norway_seaforecast_home_sea_water_z_velocity` | Sea water vertical velocity | m/s | havvarsel.no | disabled |
+| `sensor.norway_seaforecast_home_sea_water_speed` | Sea water speed | m/s | havvarsel.no | disabled |
+| `sensor.norway_seaforecast_home_sea_water_to_direction` | Sea water to direction | rad | havvarsel.no | disabled |
+| `sensor.norway_seaforecast_home_surface_u_wind_component` | Surface u-wind component (model forcing) | m/s | havvarsel.no | disabled |
+| `sensor.norway_seaforecast_home_surface_v_wind_component` | Surface v-wind component (model forcing) | m/s | havvarsel.no | disabled |
+| `sensor.norway_seaforecast_home_wind_speed` | Wind speed (model forcing) | m/s | havvarsel.no | disabled |
+| `sensor.norway_seaforecast_home_wind_to_direction` | Wind to direction (model forcing) | rad | havvarsel.no | disabled |
+| `sensor.norway_seaforecast_home_ocean_vertical_salt_diffusivity` | Ocean vertical salt diffusivity | m²/s | havvarsel.no | disabled |
+
+> **Note:** The wind variables (`Uwind_eastward`, `Vwind_northward`, `wind_direction`, `wind_length`) are the atmospheric forcing input used by the ocean model — they are not an independent weather forecast. Use a dedicated weather integration for wind.
+
+> **Note:** `sea_surface_height_above_geoid` (`zeta`) is the slow tidal rise/fall signal (±1–2 m over hours), not wave height.
+
+### Depth sensors — depth > 0 (havvarsel.no only)
+
+When **Depth > 0**, the met.no API is not used (it provides surface data only) and wave sensors are not created.
+
+The same sensors as above are available, but `temperature`, `salinity`, `u_eastward`, `v_northward`, `w`, `current_direction`, and `current_length` reflect conditions at the configured depth. The surface-only variables (`zeta`, `Uwind_eastward`, `Vwind_northward`, `wind_direction`, `wind_length`) are unaffected by depth.
+
+### Fallback behaviour
+
+If **havvarsel.no is down**: all havvarsel sensors show unavailable; wave sensors continue updating from met.no.
+
+If **met.no is down**: wave sensors show unavailable; all havvarsel sensors continue updating.
+
+If **both are down**: all sensors show unavailable; the coordinator retries on the next update cycle (every 10 minutes).
+
 ## Use
 
-The sensors display current values and time series data for oceanographic variables at each location. Each sensor includes:
+Each sensor provides:
 
-- **Current value**: The latest data point for the variable (e.g., temperature in °C)
-- **Time series data**: Historical and forecast data stored in the `series` attribute
-- **Metadata**: Variable information (units, standard names, etc.)
-- **Location data**: Your coordinates and the nearest grid point used by the API
-
-The sensors can be displayed on maps and in various cards.
-
-## Available Variables
-
-The integration creates sensors for the following oceanographic variables (disabled by default except temperature):
-
-- **Sea water potential temperature** (°C)
-- **Sea surface height above geoid** (m)
-- **Salinity** (PSU)
-- **Eastward sea water velocity** (m/s)
-- **Northward sea water velocity** (m/s)
-- **Sea water speed** (m/s)
-- **Barotropic eastward sea water velocity** (m/s)
-- **Barotropic northward sea water velocity** (m/s)
-- **Wind from direction** (radians)
-- **Wind speed** (m/s)
-- **Sea surface wave significant height** (m)
-- **Sea surface wave from direction** (radians)
-- **Sea surface wave mean period** (s)
-
-Enable the sensors you want through the entity settings in Home Assistant.
-
-## Features
-
-- 🌊 Current oceanographic data at specified locations along the Norwegian coast
-- 📊 Time series data for all variables stored as attributes for charting
-- 🗺️ Location information (your coordinates and nearest grid point)
-- ♻️ Automatic updates every 10 minutes
-- 🔄 Config flow UI for easy setup
-- 📍 Support for multiple locations and depths
-- 🎯 13 different oceanographic variables available
-- 💡 Only fetches data for enabled sensors (efficient API usage)
+- **Current value**: The data point nearest to now
+- **`series` attribute**: Full time series (list of `{timestamp, value}`) for charting
+- **`metadata` attribute**: Variable information (units, standard names, source API)
+- **`nearest_grid` attribute**: The actual grid point used by havvarsel.no
 
 ### Example view configuration
 
 ![example_view.png](img/example_view.png)
 
-The example view shown here is configured using the yaml code below. To plot time series 
-data from the `series` attribute, the custom ApexCharts card must be installed (https://github.com/RomRider/apexcharts-card)
+To plot the `series` attribute as a chart, install the [ApexCharts card](https://github.com/RomRider/apexcharts-card).
 
 ```yaml
 views:
@@ -111,10 +125,18 @@ views:
             type: sensor
             entity: sensor.norway_seaforecast_home_sea_water_potential_temperature
             detail: 1
-            icon: mdi:swim
+            icon: mdi:thermometer-water
             grid_options:
               columns: full
-            name: Current sea temperature
+            name: Sea temperature
+          - graph: line
+            type: sensor
+            entity: sensor.norway_seaforecast_home_sea_surface_wave_height
+            detail: 1
+            icon: mdi:waves
+            grid_options:
+              columns: full
+            name: Wave height
           - type: custom:apexcharts-card
             grid_options:
               columns: full
@@ -134,20 +156,20 @@ views:
             yaxis:
               - id: temp
                 decimals: 1
+              - id: wave
+                decimals: 2
+                opposite: true
             series:
               - entity: sensor.norway_seaforecast_home_sea_water_potential_temperature
                 yaxis_id: temp
-                name: Temperature
+                name: Temperature (°C)
                 data_generator: |
                   return entity.attributes.series.map((entry) => {
                     return [new Date(entry.timestamp).getTime(), entry.value];
                   });
-              - entity: sensor.norway_seaforecast_home_sea_water_potential_temperature
-                yaxis_id: temp
-                name: Trend (24h avg)
-                group_by:
-                  duration: 24h
-                  func: avg
+              - entity: sensor.norway_seaforecast_home_sea_surface_wave_height
+                yaxis_id: wave
+                name: Wave height (m)
                 data_generator: |
                   return entity.attributes.series.map((entry) => {
                     return [new Date(entry.timestamp).getTime(), entry.value];
@@ -166,9 +188,9 @@ views:
               rows: 8
 ```
 
-## Removing Sensors
+## Removing the Integration
 
-To remove a sensor, simply delete the integration from **Settings** → **Devices & Services** → **Norway Seaforecast** → (select the device) → **Delete**.
+Go to **Settings** → **Devices & Services** → **Norway Seaforecast** → select the device → **Delete**.
 
 <!-- Badge definitions -->
 [hacs-badge]: https://img.shields.io/badge/HACS-Custom-orange.svg
