@@ -15,13 +15,44 @@ from homeassistant.const import UnitOfTemperature, UnitOfLength, UnitOfSpeed
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .api import MET_OCEAN_EXCLUSIVE_VARIABLES, MET_OCEAN_VARIABLES_METADATA
+from .api import HAVVARSEL_TO_CF_NAME, MET_OCEAN_EXCLUSIVE_VARIABLES, MET_OCEAN_VARIABLES_METADATA
 from .const import CONF_SENSOR_NAME, CONF_VARIABLES, DEFAULT_SENSOR_NAME, DEFAULT_VARIABLES, DOMAIN
 from .coordinator import NorwaySeaforecastDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _migrate_entity_unique_ids(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Migrate unique_ids from raw havvarsel variable names to CF standard names.
+
+    Runs on every setup but only acts when an old-style unique_id is found.
+    Entity history, entity_id slugs, and dashboard assignments are preserved.
+    """
+    entity_registry = async_get_entity_registry(hass)
+    for entity_entry in list(entity_registry.entities.values()):
+        if entity_entry.config_entry_id != entry.entry_id:
+            continue
+        for raw_name, cf_name in HAVVARSEL_TO_CF_NAME.items():
+            old_suffix = f"_{raw_name}"
+            new_suffix = f"_{cf_name}"
+            if (
+                entity_entry.unique_id.endswith(old_suffix)
+                and not entity_entry.unique_id.endswith(new_suffix)
+            ):
+                new_unique_id = entity_entry.unique_id[: -len(old_suffix)] + new_suffix
+                entity_registry.async_update_entity(
+                    entity_entry.entity_id, new_unique_id=new_unique_id
+                )
+                _LOGGER.info(
+                    "Migrated %s unique_id: ...%s \u2192 ...%s",
+                    entity_entry.entity_id,
+                    old_suffix,
+                    new_suffix,
+                )
+                break  # Only one raw_name can match per entity
 
 
 async def async_setup_entry(
@@ -31,6 +62,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Norway Seaforecast sensor."""
     coordinator: NorwaySeaforecastDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+
+    # Migrate any existing entities that still use raw havvarsel variable names
+    # in their unique_id (e.g. "temperature") to CF standard names ("sea_water_temperature").
+    # This is a one-time, seamless rename — history and entity_ids are preserved.
+    _migrate_entity_unique_ids(hass, entry)
 
     # Fetch all available variables from API with metadata
     try:
@@ -163,7 +199,7 @@ class NorwaySeaforecastVariableSensor(
             if meta.get("key") == "units":
                 units = meta.get("value", "").strip().lower()
                 # Set TEMPERATURE device class for temperature variables from either source
-                if self.variable_name in ("temperature", "sea_water_temperature") and units in ("celsius", "°c", "c"):
+                if self.variable_name == "sea_water_temperature" and units in ("celsius", "°c", "c"):
                     return SensorDeviceClass.TEMPERATURE
                 break
         

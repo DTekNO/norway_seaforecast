@@ -12,7 +12,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import MetOceanApiClient, NorwaySeaforecastApiClient
+from .api import MetOceanApiClient, NorwaySeaforecastApiClient, CF_TO_HAVVARSEL_NAME, MET_OCEAN_EXCLUSIVE_VARIABLES
 from .const import (
     CONF_DEPTH,
     CONF_LATITUDE,
@@ -59,7 +59,11 @@ class NorwaySeaforecastDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any
         )
 
     def _get_enabled_variables(self) -> list[str]:
-        """Get list of enabled variables from entity registry."""
+        """Get list of enabled havvarsel variables from entity registry.
+
+        Entity unique IDs contain CF names; this maps them back to the raw
+        havvarsel API names. Met.no-exclusive variables are skipped.
+        """
         entity_registry = async_get_entity_registry(self.hass)
         enabled_vars = []
         
@@ -71,8 +75,13 @@ class NorwaySeaforecastDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any
                     # Extract variable name from unique_id: format is "slug_entryid_varname"
                     parts = entry.unique_id.split("_")
                     if len(parts) >= 3:
-                        var_name = "_".join(parts[2:])  # Handle variable names with underscores
-                        enabled_vars.append(var_name)
+                        cf_name = "_".join(parts[2:])  # Handle variable names with underscores
+                        # Skip met.no-exclusive variables — not fetchable from havvarsel
+                        if cf_name in MET_OCEAN_EXCLUSIVE_VARIABLES:
+                            continue
+                        # Map CF name back to havvarsel raw name; unmapped vars pass through
+                        raw_name = CF_TO_HAVVARSEL_NAME.get(cf_name, cf_name)
+                        enabled_vars.append(raw_name)
         
         # Always include temperature as fallback
         if not enabled_vars or "temperature" not in enabled_vars:

@@ -21,14 +21,9 @@ Both APIs are queried concurrently. If one is temporarily unavailable, sensors f
 
 1. Open HACS in your Home Assistant instance
 2. Click on "Integrations"
-3. Click the three dots in the top right corner
-4. Select "Custom repositories"
-5. Add the URL: `https://github.com/DTekNO/norway_seaforecast`
-6. Select category: "Integration"
-7. Click "Add"
-8. Search for "Norway Seaforecast" in HACS
-9. Click "Download"
-10. Restart Home Assistant
+3. Search for "Norway Seaforecast"
+4. Click "Download"
+5. Restart Home Assistant
 
 ### Manual Installation
 

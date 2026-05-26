@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 from datetime import datetime, UTC as dtUTC
+import json
 import logging
+from pathlib import Path
 from typing import Any
 
 import aiohttp
@@ -10,6 +12,30 @@ import async_timeout
 
 _LOGGER = logging.getLogger(__name__)
 
+# Mapping from havvarsel raw variable names to CF (Climate and Forecast) standard names.
+# Variables not listed here keep their raw name as the internal key.
+HAVVARSEL_TO_CF_NAME: dict[str, str] = {
+    "temperature":      "sea_water_temperature",
+    "salinity":         "sea_water_salinity",
+    "u_eastward":       "sea_water_eastward_velocity",
+    "v_northward":      "sea_water_northward_velocity",
+    "w":                "sea_water_vertical_velocity",
+    "zeta":             "sea_surface_height_above_geoid",
+    "current_direction": "sea_water_to_direction",
+    "current_length":   "sea_water_speed",
+    "Uwind_eastward":   "surface_eastward_wind",
+    "Vwind_northward":  "surface_northward_wind",
+    "wind_direction":   "wind_to_direction",
+    "wind_length":      "wind_speed",
+}
+
+# Reverse: CF name → havvarsel raw name, for building API fetch requests.
+CF_TO_HAVVARSEL_NAME: dict[str, str] = {v: k for k, v in HAVVARSEL_TO_CF_NAME.items()}
+# User-Agent sent to both APIs — version is read from manifest.json at import time.
+INTEGRATION_USER_AGENT = (
+    "HomeAssistant-NorwaySeaforecast/"
+    + json.loads((Path(__file__).parent / "manifest.json").read_text()).get("version", "unknown")
+)
 # Met.no Ocean Forecast API
 MET_OCEAN_API_URL = "https://api.met.no/weatherapi/oceanforecast/2.0/complete"
 
@@ -29,19 +55,19 @@ MET_OCEAN_VARIABLES_METADATA: dict[str, list[dict[str, str]]] = {
     ],
     "sea_water_temperature": [
         {"key": "units", "value": "Celsius"},
-        {"key": "long_name", "value": "Sea water temperature (met.no)"},
+        {"key": "long_name", "value": "Sea water temperature"},
         {"key": "standard_name", "value": "sea_water_temperature"},
         {"key": "source", "value": "met.no"},
     ],
     "sea_water_speed": [
         {"key": "units", "value": "meter second-1"},
-        {"key": "long_name", "value": "Sea water speed (met.no)"},
+        {"key": "long_name", "value": "Sea water speed"},
         {"key": "standard_name", "value": "sea_water_speed"},
         {"key": "source", "value": "met.no"},
     ],
     "sea_water_to_direction": [
         {"key": "units", "value": "degrees"},
-        {"key": "long_name", "value": "Sea water to direction (met.no)"},
+        {"key": "long_name", "value": "Sea water to direction"},
         {"key": "standard_name", "value": "sea_water_to_direction"},
         {"key": "source", "value": "met.no"},
     ],
@@ -80,7 +106,7 @@ class NorwaySeaforecastApiClient:
         """Get the unit of measurement for temperature from the API."""
         try:
             headers = {
-                "User-agent": "Home Assistant",
+                "User-Agent": INTEGRATION_USER_AGENT,
                 "Content-type": "application/json",
             }
             async with async_timeout.timeout(10):
@@ -110,7 +136,7 @@ class NorwaySeaforecastApiClient:
             Dict mapping variable name to description, e.g. {"temperature": "Sea water potential temperature"}
         """
         headers = {
-            "User-agent": "Home Assistant",
+            "User-Agent": INTEGRATION_USER_AGENT,
             "Content-type": "application/json",
         }
 
@@ -144,17 +170,18 @@ class NorwaySeaforecastApiClient:
                                             long_name = meta.get("value", var_name)
                                             break
                                 
-                                variables_dict[var_name] = long_name
+                                cf_name = HAVVARSEL_TO_CF_NAME.get(var_name, var_name)
+                                variables_dict[cf_name] = long_name
                             
                             if variables_dict:
                                 _LOGGER.debug("Found %d available variables", len(variables_dict))
                                 return variables_dict
                     
                     _LOGGER.warning("Unexpected dataprojectionvariables response format")
-                    return {"temperature": "Sea water potential temperature"}  # Safe fallback
+                    return {"sea_water_temperature": "Sea water temperature"}  # Safe fallback
         except Exception as err:
             _LOGGER.error("Error fetching available variables: %s", err)
-            return {"temperature": "Sea water potential temperature"}  # Safe fallback
+            return {"sea_water_temperature": "Sea water temperature"}  # Safe fallback
 
     async def async_get_variables_metadata(self) -> dict[str, list[dict[str, str]]]:
         """Get full metadata for all variables from the /dataprojectionvariables endpoint.
@@ -164,7 +191,7 @@ class NorwaySeaforecastApiClient:
             {"temperature": [{"key": "units", "value": "Celsius"}, ...]}
         """
         headers = {
-            "User-agent": "Home Assistant",
+            "User-Agent": INTEGRATION_USER_AGENT,
             "Content-type": "application/json",
         }
 
@@ -190,7 +217,8 @@ class NorwaySeaforecastApiClient:
                                     continue
                                 
                                 metadata = item.get("metadata", [])
-                                metadata_dict[var_name] = metadata
+                                cf_name = HAVVARSEL_TO_CF_NAME.get(var_name, var_name)
+                                metadata_dict[cf_name] = metadata
                             
                             _LOGGER.debug("Retrieved metadata for %d variables", len(metadata_dict))
                             return metadata_dict
@@ -216,7 +244,7 @@ class NorwaySeaforecastApiClient:
         _LOGGER.info("Fetching data from: %s with params: %s", url, params)
 
         headers = {
-            "User-agent": "Home Assistant",
+            "User-Agent": INTEGRATION_USER_AGENT,
             "Content-type": "application/json",
         }
 
@@ -299,17 +327,20 @@ class NorwaySeaforecastApiClient:
                     if not var_key:
                         continue
                     
+                    # Rename to CF standard name (identity for unmapped variables)
+                    cf_key = HAVVARSEL_TO_CF_NAME.get(var_key, var_key)
+
                     # Initialize variable dict if first time seeing this variable
-                    if var_key not in variables:
-                        # Get metadata from the fetched metadata dict
-                        var_metadata = variables_metadata.get(var_key, [])
-                        _LOGGER.debug("Initializing variable '%s' with %d metadata entries", var_key, len(var_metadata))
+                    if cf_key not in variables:
+                        # metadata_dict is already CF-keyed after async_get_variables_metadata
+                        var_metadata = variables_metadata.get(cf_key, [])
+                        _LOGGER.debug("Initializing variable '%s' with %d metadata entries", cf_key, len(var_metadata))
                         if var_metadata:
                             # Log units if present
                             for meta in var_metadata:
                                 if isinstance(meta, dict) and meta.get("key") == "units":
-                                    _LOGGER.debug("Variable '%s' units: %s", var_key, meta.get("value"))
-                        variables[var_key] = {
+                                    _LOGGER.debug("Variable '%s' units: %s", cf_key, meta.get("value"))
+                        variables[cf_key] = {
                             "metadata": var_metadata,
                             "series": [],
                             "current": None,
@@ -322,12 +353,12 @@ class NorwaySeaforecastApiClient:
                     except (ValueError, TypeError):
                         value_float = None
                     
-                    variables[var_key]["series"].append({
+                    variables[cf_key]["series"].append({
                         "timestamp": timestamp_iso,
                         "value": value_float,
                     })
                     
-                    variables[var_key]["raw_data"].append({
+                    variables[cf_key]["raw_data"].append({
                         "rawTime": raw_time,
                         "value": value_float,
                     })
@@ -372,13 +403,13 @@ class NorwaySeaforecastApiClient:
         variables: dict[str, Any] = {}
 
         for var in variables_list:
-            # variableName seems to be the key used by the API
-            name = var.get("variableName") or var.get("variable")
-            if not name:
+            # variableName is the raw API name; map to CF standard name
+            raw_name = var.get("variableName") or var.get("variable")
+            if not raw_name:
                 _LOGGER.warning("Variable without name found in response: %s", var.keys())
                 continue
-                
-            _LOGGER.debug("Processing variable: %s", name)
+            name = HAVVARSEL_TO_CF_NAME.get(raw_name, raw_name)
+            _LOGGER.debug("Processing variable: %s (CF: %s)", raw_name, name)
             metadata = var.get("metadata", [])
             series = []
             data_points = var.get("data", [])
@@ -432,7 +463,7 @@ class NorwaySeaforecastApiClient:
 
         # Try to extract temperature info for backward compatibility
         variables = projection.get("variables", {})
-        temp = variables.get("temperature") or next(iter(variables.values()), None)
+        temp = variables.get("sea_water_temperature") or next(iter(variables.values()), None)
 
         current_temp = None
         timestamp = None
@@ -487,7 +518,7 @@ class MetOceanApiClient:
 
     async def async_get_data(self) -> dict[str, Any]:
         """Fetch ocean forecast data from met.no and return in standard internal format."""
-        headers = {"User-Agent": "Home Assistant NorwaySeaforecast/1.0"}
+        headers = {"User-Agent": INTEGRATION_USER_AGENT}
         params = {"lat": self._latitude, "lon": self._longitude}
 
         try:
